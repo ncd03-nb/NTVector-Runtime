@@ -1,0 +1,12 @@
+repository=https://github.com/JingMatrix/NeoZygisk
+commit=225b32b802cff876c09a4a8ec4a1677ce0538c39
+lsplt_commit=2cfb537d7e8588abefbd3ddc55cacf3188662f9e
+vector_repository=https://github.com/JingMatrix/Vector
+vector_commit=88f8e1faa8b4e7ce20aefabe9c295cd746ea038e
+vector_url=https://github.com/JingMatrix/Vector/releases/download/v2.2/Vector-v2.2-3080-Release.zip
+vector_version=2.2 (3080)
+vector_zip_sha256=9ee8323575d615f7b3f1076ff60b2a63a49390ef11881b52632311a37f6f79cc
+abi=arm64-v8a
+android_min=27
+ndk=30.0.16248370
+cmake=3.31.6

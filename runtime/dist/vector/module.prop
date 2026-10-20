@@ -1,0 +1,7 @@
+id=zygisk_vector
+name=Vector
+version=v2.2 (3080-88f8e1fa-JingMatrix-Vector)
+versionCode=3080
+author=JingMatrix
+description=A modern, Xposed-compatible framework for Android application hooking. (Android 8.1 ~ 17)
+updateJson=https://raw.githubusercontent.com/JingMatrix/Vector/master/zygisk/update.json

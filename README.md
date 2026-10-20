@@ -1,40 +1,52 @@
-# NTNexAlloy Runtime
+# NTVector Runtime
 
-ROM-integrated engine for the unmodified official [NexAlloy-XES APK](https://github.com/gnadgnaoh/NexAlloy-XES).
-Install an upstream APK update to update app hooks; the framework does not need to
-be rebuilt for a compatible module release. The original APK owns the feature UI. It is installed once as a removable user
-app; uninstalling it does not make the ROM restore it on later boots.
+GPL-3.0 ROM integration for [Vector](https://github.com/JingMatrix/Vector).
+The original signed Vector v2.2 (3080) manager is a system app in `system_ext`,
+with a launcher icon. Users install Xposed module APKs normally, then enable
+modules and select their scopes in Vector. No module is bundled or enabled by default.
 
-There is no custom NexAlloy controller APK in the ROM and no dependency on NTManager.
-The historical `controller-app/` and `compat/` sources document the retired
-integration and are not packaged by current toolbuilds.
+The loader and daemon start from Android init in their own SELinux domain.
+Users do not need Magisk, KernelSU, `su` or a root-manager module. The native
+loader uses a dedicated ROM mode and a private engine directory.
 
-## Runtime
+## Contents
 
-- `src/`: framework bootstrap, signed APK discovery, cache verification and native loader.
-- `modern-src/`: API adapter and ROM settings service.
-- `shared-src/`: upstream certificate, metadata and IPC contract.
-- `scripts/build-modern-bridge.py`: builds API/IPC DEX from libxposed API/interface 102.
-- `scripts/package-engine.py`: validates the 63-class legacy API/native loader shim.
-- `scripts/patch-provider-transport.py`: adds the namespaced settings service dispatch.
-- `metadata/`: engine asset pins and the initial unchanged upstream APK provenance.
+- `runtime/`: tested installer, init services, split-policy integration and verified binaries.
+- `source/NeoZygisk/`: complete patched native loader source, including its pinned lsplt dependency.
+- `upstream/Vector/`: matching original Vector source, pinned as a Git submodule.
+- `runtime/neozgyisk-rom.patch`: changes against the original NeoZygisk revision.
+- `runtime/upstream.txt`: revisions, upstream release URL and SHA256 pins.
+- `runtime/verification.json`: device checks and their scope.
 
-The engine/API shim and six ABI libraries are fixed in framework.jar. The bundled
-original APK is only a first-boot seed outside the system app scan. Active module
-hook code and DexKit come from the installed original APK. There is no legacy
-modified module fallback and no simultaneous second hook payload.
+## Install into an extracted ROM
 
-See [integration](docs/INTEGRATION.md) and [validation](docs/INDEPENDENT-UPDATES.md).
+Run `python3 runtime/install.py <images-root>` after enabling Toolbox. The tree
+must contain `system_ext` and its SELinux policy. For a standalone tree pass
+`--vendor-policy-version` from the target vendor partition explicitly.
+See [runtime documentation](runtime/README.md) for paths and startup behavior.
 
-## Upstream authors and licensing
+Vector compiler wrappers stay in the compiler-service namespace. App Zygotes use
+original ART compiler binaries; startup rechecks handle OEM namespace changes.
+Both owned-probe module hooks and VNeID were verified after reboot. The existing
+NT partition service remains available.
 
-- Original project: [NexAlloy/NexAlloy](https://github.com/NexAlloy/NexAlloy),
-  **ChsBuffer** ([@chsbuffer](https://github.com/chsbuffer)).
-- XES fork: [gnadgnaoh/NexAlloy-XES](https://github.com/gnadgnaoh/NexAlloy-XES),
-  **XES SEX** ([@gnadgnaoh](https://github.com/gnadgnaoh)).
-- Upstream history also credits Fioren and Moeta Yuko.
+## Build and corresponding source
 
-The NothingsVN adapter is GPL-3.0-only. Upstream APK, native libraries, legacy API
-shim and libxposed dependencies retain their own licenses. This source repository
-does not redistribute their binary artifacts; obtain and validate them separately.
-See [NOTICE.md](NOTICE.md).
+Clone with `git clone --recurse-submodules`, or run
+`git submodule update --init --recursive` after cloning. Build the patched loader:
+
+```sh
+python3 runtime/build-loader.py --source source/NeoZygisk --sdk /path/to/android-sdk --out build
+```
+
+The original Vector source and dependency revisions are in `upstream/Vector`.
+Its signed manager and engine binaries are unchanged. Refer to its Gradle build
+and upstream release instructions when rebuilding Vector.
+See [licensing and provenance](NOTICE.md).
+
+## Validation
+
+Tested on ColorOS 17 / Android 17 with SELinux enforcing: cold boot, manager
+activation, module enable/disable against an owned probe, full partition
+readback, and app compiler namespace separation. The previous root-manager Vector
+module stayed disabled. Module compatibility depends on its Android/API support.

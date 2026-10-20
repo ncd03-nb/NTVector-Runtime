@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-20",
+  "vector": "2.2 (3080)",
+  "api": 102,
+  "test_android_sdk": 37,
+  "test_selinux": "Enforcing",
+  "manager_apk": "original upstream bytes; no re-signing",
+  "manager_launcher_active": true,
+  "selinux_status": "loaded",
+  "system_framework": "injected",
+  "dex2oat_wrapper": "supported",
+  "legacy_owned_probe": {
+    "enabled": "HOOKED",
+    "disabled": "ORIGINAL",
+    "probe_apps_uninstalled": true
+  },
+  "enabled_modules_after_test": 1,
+  "root_provider_mode": "Rom; root-manager detection and mount manipulation disabled",
+  "live_service_domain": "u:r:ntvectord:s0",
+  "production_daemon_mount_namespace": "init",
+  "live_staging": "root shell used only to stage files, install live policy and enter production domain",
+  "tree_policy_compile": "PASS using target system_ext policy and current device system/vendor/product policies",
+  "tree_install_idempotent": true,
+  "normal_debug_policy_hashes": "PASS; vendor mapping 34.0 for this standalone tree",
+  "cold_boot_from_flashed_image": "PASS; init starts monitor and daemon, original launcher manager active, SELinux loaded/framework injected/dex2oat supported",
+  "physical_partitions_written_by_this_task": [
+    "system_ext_b"
+  ],
+  "rom_engine_path": "/data/misc/ntlsposed/modules/zygisk_vector",
+  "root_manager_module": "disabled; no ROM-engine dependency",
+  "cold_boot_live_policy_applied": false,
+  "flashed_image_sha256": "4d5ddf56cd9bcbd45b10d3eab362f1fc6e45bb54b280b22420602a7f9f590efa",
+  "partition_readback": "PASS; exact full-image SHA256 match",
+  "existing_partition_service": "Preserved and running after cold boot; late directory restorecon added",
+  "enabled_modules_note": "User module preserved; probe module disabled and both owned test APKs removed",
+  "app_art_namespaces": {
+    "cold_boot": "PASS; no Vector compiler bind mounts in app Zygote namespaces",
+    "compiler_service_wrappers": "retained in init/artd",
+    "startup_race": "recheck changing namespaces and boot_completed; worker bounded",
+    "vneid": "CA-E005 absent after data reset; user confirmed normal use",
+    "owned_probe_enabled": "HOOKED",
+    "owned_probe_disabled": "ORIGINAL",
+    "app_integrity_checks_or_APK_modified": false
+  },
+  "legacy_app_specific_integration_removed": true
+}

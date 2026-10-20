@@ -1,0 +1,3 @@
+[submodule "upstream/Vector"]
+	path = upstream/Vector
+	url = https://github.com/JingMatrix/Vector

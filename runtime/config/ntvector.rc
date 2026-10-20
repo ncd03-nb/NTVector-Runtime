@@ -1,0 +1,56 @@
+# ROM-owned Vector: no su, Magisk, KernelSU or boot-image changes.
+on post-fs-data
+    mkdir /data/misc/ntlsposed 0700 root root
+    restorecon_recursive /data/misc/ntlsposed
+    exec_start ntvector-prepare
+    start ntvector-monitor
+    exec_start ntvector-ready
+    start ntvectord
+
+service ntvector-prepare /system/bin/sh /system_ext/etc/ntvector/start.sh prepare
+    user root
+    group root system readproc log
+    seclabel u:r:ntvectord:s0
+    disabled
+    oneshot
+
+service ntvector-monitor /system/bin/sh /system_ext/etc/ntvector/start.sh monitor
+    user root
+    group root system readproc log
+    seclabel u:r:ntvectord:s0
+    disabled
+    oneshot
+
+service ntvector-ready /system/bin/sh /system_ext/etc/ntvector/start.sh ready
+    user root
+    group root system readproc log
+    seclabel u:r:ntvectord:s0
+    disabled
+    oneshot
+
+service ntvectord /system/bin/sh /system_ext/etc/ntvector/start.sh daemon
+    user root
+    group root system readproc log
+    seclabel u:r:ntvectord:s0
+    disabled
+    oneshot
+
+# App processes inherit original ART compiler binaries, without Vector bind mounts.
+# Recheck after OEM Zygote namespace changes have finished.
+on property:sys.boot_completed=1
+    start ntvector-app-art
+on property:init.svc.zygote=running
+    start ntvector-app-art
+on property:init.svc.zygote_secondary=running
+    start ntvector-app-art
+on property:init.svc.zygote_tango=running
+    start ntvector-app-art
+on property:init.svc.zygote_next=running
+    start ntvector-app-art
+
+service ntvector-app-art /system/bin/sh /system_ext/etc/ntvector/app-art.sh
+    user root
+    group root system readproc log
+    seclabel u:r:ntvectord:s0
+    disabled
+    oneshot

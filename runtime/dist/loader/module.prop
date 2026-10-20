@@ -1,0 +1,5 @@
+id=nt_vector_rom
+name=NT ROM Vector loader
+version=1
+versionCode=1
+description=Init-owned Vector Zygisk loader

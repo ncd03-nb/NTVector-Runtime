@@ -1,0 +1,5 @@
+# Preserve verified payload bytes on every checkout platform.
+* -text
+# Keep original license line endings and valid patch context unchanged.
+*-LICENSE whitespace=cr-at-eol
+*.patch -whitespace

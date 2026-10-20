@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Vendored upstream source is kept byte-for-byte, including its formatting.
+source/** -text -whitespace

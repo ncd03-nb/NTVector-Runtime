@@ -1,52 +1,28 @@
-# Attribution and notices
+# Licensing and provenance
 
-## Original NexAlloy project
+This ROM integration is distributed under GNU GPL version 3. See [LICENSE](LICENSE).
+Upstream copyright, license headers and attribution remain in the corresponding sources.
 
-- Project: [NexAlloy/NexAlloy](https://github.com/NexAlloy/NexAlloy)
-- Original author and maintainer: **ChsBuffer**
-  ([@chsbuffer](https://github.com/chsbuffer))
-- License: GNU General Public License v3.0
+## Vector
 
-NexAlloy is the upstream LSPosed module and patch implementation. No upstream source file is
-claimed as original NothingsVN work.
+- Project: JingMatrix and Vector contributors, https://github.com/JingMatrix/Vector
+- Revision: `88f8e1faa8b4e7ce20aefabe9c295cd746ea038e` (v2.2, 3080).
+- Corresponding original source: `upstream/Vector`, including its pinned dependency revisions.
+- Unmodified release manager and engine: `runtime/dist/vector`.
+- License copy: `runtime/Vector-LICENSE`.
 
-## NexAlloy-XES fork
+## NeoZygisk ROM loader
 
-- Project: [gnadgnaoh/NexAlloy-XES](https://github.com/gnadgnaoh/NexAlloy-XES)
-- Fork author and maintainer: **XES SEX**
-  ([@gnadgnaoh](https://github.com/gnadgnaoh))
-- Based on: `NexAlloy/NexAlloy`
-- License: GNU General Public License v3.0
+- Project: JingMatrix and NeoZygisk contributors, https://github.com/JingMatrix/NeoZygisk
+- Base revision: `225b32b802cff876c09a4a8ec4a1677ce0538c39`.
+- Modified corresponding source: `source/NeoZygisk`.
+- Changes: `runtime/neozgyisk-rom.patch`; build: `runtime/build-loader.py`.
+- License copy: `runtime/NeoZygisk-LICENSE`.
 
-Contributors visible in the fork history at the time this integration was published:
+## Dependencies
 
-- **XES SEX** (`@gnadgnaoh`)
-- **ChsBuffer** (`@chsbuffer`)
-- **Fioren** (`@FiorenMas`)
-- **Moeta Yuko** (`@moetayuko`)
-
-These names are included to preserve attribution. The complete and authoritative contribution
-history remains in the upstream Git repositories.
-
-## NothingsVN adapter
-
-The framework loading adapter, ROM integration contract, and export tooling in this repository
-were prepared by **NothingsVN contributors**, maintained at
-[@tiencv2006](https://github.com/tiencv2006).
-
-The adapter calls the upstream payload through its published runtime classes. It does not transfer
-ownership of upstream patches, hook implementations, native libraries, branding, or trademarks.
-
-## Third-party components used by the payload
-
-The upstream projects credit and/or depend on projects including DexKit, LSPlant, AliuHook,
-Morphe, and ReVanced. Their own licenses and notices apply. Because this repository does not
-redistribute those binaries, consult the upstream repositories for the authoritative license set.
-
-## Original APK bridge
-
-The original-only ROM bridge uses libxposed API and interface 102.0.0, licensed
-under Apache License 2.0 by the libxposed contributors. Source projects:
-https://github.com/libxposed/api and https://github.com/libxposed/service.
-The full license is in `metadata/LICENSE-libxposed.txt` and is embedded with the
-bridge by the toolbuilds. No changes are made to the signed upstream module APK.
+- lsplt revision `2cfb537d7e8588abefbd3ddc55cacf3188662f9e` is included under
+  `source/NeoZygisk/loader/src/external/lsplt` with its license and notices.
+- Vector dependencies retain their original licenses in its recursive source submodules.
+- Payload checksums and original release provenance are recorded in `runtime/manifest.json`
+  and `runtime/upstream.txt`.

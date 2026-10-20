@@ -1,0 +1,177 @@
+diff --git a/loader/src/common/files.cpp b/loader/src/common/files.cpp
+index 8f07d37..22d3d66 100644
+--- a/loader/src/common/files.cpp
++++ b/loader/src/common/files.cpp
+@@ -1,4 +1,5 @@
+ #include "files.hpp"
++#include <cstdlib>
+ 
+ #include <sys/sysmacros.h>
+ 
+diff --git a/loader/src/injector/zygisk.hpp b/loader/src/injector/zygisk.hpp
+index cd81fa8..18766cc 100644
+--- a/loader/src/injector/zygisk.hpp
++++ b/loader/src/injector/zygisk.hpp
+@@ -1,4 +1,5 @@
+ #pragma once
++#include <vector>
+ 
+ #include <jni.h>
+ #include <sys/types.h>
+diff --git a/loader/src/ptracer/monitor_impl.cpp b/loader/src/ptracer/monitor_impl.cpp
+index b1a79b1..af48538 100644
+--- a/loader/src/ptracer/monitor_impl.cpp
++++ b/loader/src/ptracer/monitor_impl.cpp
+@@ -211,6 +211,10 @@ void AppMonitor::SocketHandler::HandleEvent([[maybe_unused]] EventLoop &loop, ui
+             PLOGE("SocketHandler: recv(peek)");
+             continue;
+         }
++        if (nread < static_cast<ssize_t>(sizeof(Command))) {
++            recv(sock_fd_, buf_.data(), buf_.size(), 0);
++            continue;
++        }
+         ssize_t real_size;
+         if (msg_header.cmd >= Command::DAEMON_SET_INFO &&
+             msg_header.cmd != Command::SYSTEM_SERVER_STARTED) {
+@@ -220,6 +224,12 @@ void AppMonitor::SocketHandler::HandleEvent([[maybe_unused]] EventLoop &loop, ui
+                 recv(sock_fd_, buf_.data(), buf_.size(), 0);
+                 continue;
+             }
++            if (msg_header.length < 1 || msg_header.length > 65536 ||
++                nread != static_cast<ssize_t>(sizeof(MsgHead) + msg_header.length)) {
++                LOGE("SocketHandler: invalid daemon message length");
++                recv(sock_fd_, buf_.data(), buf_.size(), 0);
++                continue;
++            }
+             real_size = sizeof(MsgHead) + msg_header.length;
+         } else {
+             if (static_cast<size_t>(nread) != sizeof(Command)) {
+@@ -231,8 +241,7 @@ void AppMonitor::SocketHandler::HandleEvent([[maybe_unused]] EventLoop &loop, ui
+             real_size = sizeof(Command);
+         }
+         buf_.resize(real_size);
+-        MsgHead &full_msg = *reinterpret_cast<MsgHead *>(buf_.data());
+-        nread = recv(sock_fd_, &full_msg, real_size, 0);
++        nread = recv(sock_fd_, buf_.data(), buf_.size(), 0);
+         if (nread == -1) {
+             PLOGE("recv(read)");
+             continue;
+@@ -242,6 +251,8 @@ void AppMonitor::SocketHandler::HandleEvent([[maybe_unused]] EventLoop &loop, ui
+             continue;
+         }
+ 
++        MsgHead &full_msg = *reinterpret_cast<MsgHead *>(buf_.data());
++
+         switch (full_msg.cmd) {
+         case START:
+             monitor_.request_start();
+diff --git a/zygiskd/Cargo.toml b/zygiskd/Cargo.toml
+index 0b01ccf..6de54fd 100644
+--- a/zygiskd/Cargo.toml
++++ b/zygiskd/Cargo.toml
+@@ -5,6 +5,9 @@ version = "1.1.0"
+ edition = "2024"
+ rust-version = "1.85"
+ 
++[features]
++rom = []
++
+ [dependencies]
+ android_logger = "0.15"
+ anyhow = { version = "1.0", features = ["backtrace"] }
+diff --git a/zygiskd/src/constants.rs b/zygiskd/src/constants.rs
+index 32cad26..c65e712 100644
+--- a/zygiskd/src/constants.rs
++++ b/zygiskd/src/constants.rs
+@@ -31,7 +31,10 @@ pub const MAX_LOG_LEVEL: LevelFilter = LevelFilter::Trace;
+ pub const MAX_LOG_LEVEL: LevelFilter = LevelFilter::Info;
+ 
+ /// The relative path to the directory where Zygisk modules are stored.
++#[cfg(not(feature = "rom"))]
+ pub const PATH_MODULES_DIR: &str = "..";
++#[cfg(feature = "rom")]
++pub const PATH_MODULES_DIR: &str = "/data/misc/ntlsposed/modules";
+ 
+ // --- IPC Constants ---
+ // These are magic numbers used in communication with the controller.
+diff --git a/zygiskd/src/main.rs b/zygiskd/src/main.rs
+index 8e9a493..12657fd 100644
+--- a/zygiskd/src/main.rs
++++ b/zygiskd/src/main.rs
+@@ -134,10 +134,11 @@ fn start() {
+ /// The main entry point for the Zygisk daemon.
+ /// It sets up the environment and launches the core daemon logic.
+ fn main_daemon_entry(tmp_path: Option<&str>) -> anyhow::Result<()> {
+-    // We must be in the root mount namespace to function correctly.
+-    mount::switch_mount_namespace(1)?;
+-    // Detect and globally set the root implementation.
+     root_impl::setup();
++    // ROM init starts us in its namespace. Do not inspect/change root-manager state.
++    if *root_impl::get() != root_impl::RootImpl::Rom {
++        mount::switch_mount_namespace(1)?;
++    }
+     log::info!("Current root implementation: {:?}", root_impl::get());
+     // NeoZygisk unmounts module traces itself; make sure the root solution's own
+     // kernel-side unmount is off so the two do not race.
+diff --git a/zygiskd/src/root_impl/mod.rs b/zygiskd/src/root_impl/mod.rs
+index e7602ca..9ec5c48 100644
+--- a/zygiskd/src/root_impl/mod.rs
++++ b/zygiskd/src/root_impl/mod.rs
+@@ -14,6 +14,8 @@ use std::sync::OnceLock;
+ /// Represents the detected root solution on the system.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub enum RootImpl {
++    /// ROM init owns the daemon; no root manager or su interface is exposed.
++    Rom,
+     /// No supported root solution was found.
+     None,
+     /// A supported root solution was found, but its version is too old.
+@@ -76,7 +78,7 @@ fn detect_root() -> RootImpl {
+ /// This must be called once near startup before any other functions in this module are used.
+ pub fn setup() {
+     ROOT_IMPL
+-        .set(detect_root())
++        .set(if cfg!(feature = "rom") { RootImpl::Rom } else { detect_root() })
+         .expect("setup() should only be called once");
+ }
+ 
+diff --git a/zygiskd/src/zygiskd.rs b/zygiskd/src/zygiskd.rs
+index d343f95..95c4913 100644
+--- a/zygiskd/src/zygiskd.rs
++++ b/zygiskd/src/zygiskd.rs
+@@ -89,6 +89,7 @@ fn handle_connection(mut stream: UnixStream, context: Arc<AppContext>) -> Result
+         // These actions are lightweight and handled synchronously.
+         DaemonSocketAction::CacheMountNamespace => {
+             let pid = stream.read_u32()? as i32;
++            if *root_impl::get() == root_impl::RootImpl::Rom { return Ok(()); }
+             context
+                 .mount_manager
+                 .save_mount_namespace(pid, MountNamespace::Clean)?;
+@@ -176,7 +177,8 @@ fn initialize_globals(tmp_path: Option<&str>) -> Result<()> {
+ fn send_startup_info(modules: &[Module]) -> Result<()> {
+     let mut msg = Vec::<u8>::new();
+     let info = match root_impl::get() {
+-        root_impl::RootImpl::APatch
++        root_impl::RootImpl::Rom
++        | root_impl::RootImpl::APatch
+         | root_impl::RootImpl::KernelSU
+         | root_impl::RootImpl::Magisk => {
+             msg.extend_from_slice(&constants::DAEMON_SET_INFO.to_le_bytes());
+@@ -232,6 +234,9 @@ fn load_modules() -> Result<Vec<Module>> {
+ 
+     for entry in dir.flatten() {
+         let name = entry.file_name().into_string().unwrap_or_default();
++        if *root_impl::get() == root_impl::RootImpl::Rom && name != "zygisk_vector" {
++            continue;
++        }
+         let so_path = entry.path().join(format!("zygisk/{arch}.so"));
+         let disabled_flag = entry.path().join("disable");
+ 
+@@ -288,6 +293,7 @@ fn create_library_fd(so_path: &Path) -> Result<OwnedFd> {
+ fn create_daemon_socket() -> Result<UnixListener> {
+     utils::set_socket_create_context("u:r:zygote:s0")?;
+     let listener = utils::unix_listener_from_path(DAEMON_SOCKET_PATH.get().unwrap())?;
++    utils::set_socket_create_context(&utils::get_current_attr()?)?;
+     Ok(listener)
+ }
+ 

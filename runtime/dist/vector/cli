@@ -1,0 +1,2 @@
+#!/system/bin/sh
+exec /system/bin/app_process -Djava.class.path=/data/misc/ntlsposed/modules/zygisk_vector/daemon.apk /system/bin --nice-name=VectorCli org.matrix.vector.daemon.Cli "$@"
