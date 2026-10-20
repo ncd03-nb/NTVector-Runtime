@@ -62,8 +62,9 @@ To rebuild the native loader on Linux/WSL:
 1. Clone NeoZygisk at the pinned commit and initialize its pinned lsplt submodule.
 2. Apply `git apply /path/to/neozgyisk-rom.patch` from that source checkout.
 3. Install the Android Rust target `aarch64-linux-android` and `cargo-ndk`.
-4. Run `python3 build-loader.py --source <checkout> --sdk <sdk> --out <output>`.
-5. Copy `native-arm64-v8a/libzygisk_ptrace.so`, `native-arm64-v8a/libzygisk.so` and
+4. Keep the source Cargo.lock matching `zygiskd.Cargo.lock` (the build helper copies it when absent).
+5. Run `python3 build-loader.py --source <checkout> --sdk <sdk> --out <output>`.
+6. Copy `native-arm64-v8a/libzygisk_ptrace.so`, `native-arm64-v8a/libzygisk.so` and
    `rust-target/aarch64-linux-android/release/zygiskd` into their corresponding `dist` paths,
    then regenerate `manifest.json` and `SHA256SUMS` before distributing.
 

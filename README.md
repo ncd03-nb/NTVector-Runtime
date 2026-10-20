@@ -40,6 +40,7 @@ python3 runtime/build-loader.py --source source/NeoZygisk --sdk /path/to/android
 ```
 
 The original Vector source and dependency revisions are in `upstream/Vector`.
+The ROM loader build uses the committed Cargo.lock from the tested payload with `--locked`.
 Its signed manager and engine binaries are unchanged. Refer to its Gradle build
 and upstream release instructions when rebuilding Vector.
 See [licensing and provenance](NOTICE.md).
