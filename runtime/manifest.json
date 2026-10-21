@@ -18,7 +18,7 @@
     "dist/loader/bin/zygisk-ptrace64": "6d91773cfe8bdd2da430726df51ff1e9efa1a49a033fa4652a2303a8a89350f6",
     "dist/loader/bin/zygiskd64": "cda7a98977f5dee10cf36b5f759a172469406d506b0ba2fac2de4535d32e225e",
     "config/ntvector.rc": "e48e5dfc9e7cb1935f777a0f6660569e72b4db1c06d050e6433cc66667841dc4",
-    "config/start.sh": "8e7967db357fc8a3aa3e52c029cba16f2cca33f80805ec696c97a0535c2f56bb",
+    "config/start.sh": "4da426fb63d093b3e60cc52f5e702cff56c6b28fe7665efab4d165a94bd2fcf9",
     "config/app-art.sh": "c5b2ce203d02ecede8c6b79da15b5db80d64cf29c31c8d4f663c403f8bfcf4e1"
   }
 }

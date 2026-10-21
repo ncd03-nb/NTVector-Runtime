@@ -37,6 +37,13 @@ Payload checksum failures or an unrelated user-owned Vector installation skip RO
 Disabling a previous Vector module in the root manager does not disable the private ROM engine.
 Preparation waits at most five seconds for the monitor before allowing boot to continue.
 
+Fresh installations may create the two compatibility directories with the ROM's
+`adb_data_file` label. Preparation explicitly relabels only the owned
+`zygisk_vector` directory and its `bin` directory to `xposed_file` before writing
+the disable marker or libraries. The existing unrelated-installation guard runs
+first. No general write permission to `adb_data_file` is granted. Without this
+step, SELinux blocks the first marker write and all later services stay inactive.
+
 ## ROM installation
 
 Run `python3 install.py <images-root>` with a real `system_ext` split-policy tree. The installer

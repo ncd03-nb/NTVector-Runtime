@@ -24,6 +24,10 @@ case "${1:-}" in
         exit 0
     fi
     mkdir -p "$base/modules" "$base/runtime/lib64" "$base/loader/bin" "$compat/bin"
+    # Fresh /data/adb directories inherit adb_data_file, which the daemon must
+    # not receive general file-write access to. Relabel only these owned dirs
+    # before creating disable or copying the two upstream compatibility libs.
+    chcon u:object_r:xposed_file:s0 "$compat" "$compat/bin"
     touch "$compat/disable"
     # Only these two upstream hardcoded compatibility paths are needed.
     cp "$code/dist/vector/bin/liboat_hook32.so" "$compat/bin/liboat_hook32.so"

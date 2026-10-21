@@ -42,5 +42,16 @@
     "owned_probe_disabled": "ORIGINAL",
     "app_integrity_checks_or_APK_modified": false
   },
-  "legacy_app_specific_integration_removed": true
+  "legacy_app_specific_integration_removed": true,
+  "hyperos4_fresh_install": {
+    "date": "2026-10-21",
+    "android_sdk": 37,
+    "selinux": "Enforcing",
+    "root_cause": "Fresh compatibility dirs inherited adb_data_file; disable marker creation failed before runtime preparation",
+    "fix": "Relabel only guarded ROM-owned compatibility dirs to xposed_file before writing",
+    "before": "Isolated fresh-label regression reproduced Permission denied",
+    "after": "Prepare completed in production ntvectord domain without live policy changes; init-owned monitor/daemon running; Zygote injected",
+    "manager": "Original manager active; user confirmed module operation",
+    "test_boot": "Android framework restart on installed ROM; no full image flash or cold-boot test in this fix"
+  }
 }
