@@ -53,5 +53,22 @@
     "after": "Prepare completed in production ntvectord domain without live policy changes; init-owned monitor/daemon running; Zygote injected",
     "manager": "Original manager active; user confirmed module operation",
     "test_boot": "Android framework restart on installed ROM; no full image flash or cold-boot test in this fix"
+  },
+  "coloros16_fresh_data": {
+    "date": "2026-10-22",
+    "android_sdk": 36,
+    "selinux": "Enforcing",
+    "root_cause": "OPlus/PT still bundled the startup script before the guarded fresh-directory relabel fix; prepare failed creating compat/disable on adb_data_file",
+    "before": "Production ntvectord domain reproduced touch Permission denied after user format data",
+    "after": "Guarded compatibility directory relabel allowed prepare to finish; init-owned monitor and daemon running, framework injected into system_server",
+    "manager": "Original Vector 2.2 (3080), API 102 reported active; user confirmed normal hook operation",
+    "test_mode": "Temporary init-namespace start.sh/checksum bind mounts and Android framework restart; no physical partition write or full cold-boot test",
+    "additional_live_policy_changes": false,
+    "global_selinux_mode_changed": false,
+    "startup_sha256": "4da426fb63d093b3e60cc52f5e702cff56c6b28fe7665efab4d165a94bd2fcf9",
+    "sync_targets": [
+      "OPlus toolbuild",
+      "OPlus PT toolbuild"
+    ]
   }
 }

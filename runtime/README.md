@@ -93,3 +93,14 @@ VNeID CA-E005 reproduced with inherited wrappers and disappeared when only those
 mounts were removed. After data reset, the flashed fix passed and the user confirmed normal
 VNeID use. No VNeID APK, app integrity check, or integrity-service result was modified.
 The owned hook probe still returned HOOKED when enabled and ORIGINAL when disabled.
+
+## ColorOS fresh-data validation (2026-10-22)
+
+The OPlus/PT bundles had retained the startup script from before the fresh-directory
+relabel fix. On ColorOS 16 / Android 16 after a user data format, production-domain
+preparation reproduced a denied write to the compatibility disable marker. The
+current guarded relabel fix completed preparation without new policy grants. Init
+services ran, the original manager became active, and the owner confirmed module
+hooks. This test used temporary script/checksum mounts and an Android framework
+restart, not a flashed image or full cold boot. New OPlus/PT builds include the fix
+so fresh data does not depend on directories created during a previous live test.
