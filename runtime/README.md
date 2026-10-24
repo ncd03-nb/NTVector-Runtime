@@ -46,6 +46,14 @@ step, SELinux blocks the first marker write and all later services stay inactive
 
 ## ROM installation
 
+Android 14 / API 34 is excluded. The installer reads the actual framework SDK
+from system properties before loading the payload. On API 34 it removes an
+existing ROM-owned Vector manager, runtime directory, init service, marked CIL
+blocks and corresponding filesystem metadata. Normal/debug policy digests are
+updated after cleanup. Other init services and policy entries are preserved.
+Android launch API and vendor mapping version do not trigger this exclusion.
+Other Android versions retain the existing installation behavior.
+
 Run `python3 install.py <images-root>` with a real `system_ext` split-policy tree. The installer
 adds the init service, original manager, CIL rules, contexts and kitchen filesystem metadata.
 Vendor mapping is read from `<images-root>/vendor/etc/selinux/plat_sepolicy_vers.txt`.

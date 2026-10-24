@@ -30,6 +30,10 @@ original ART compiler binaries; startup rechecks handle OEM namespace changes.
 Both owned-probe module hooks and VNeID were verified after reboot. The existing
 NT partition service remains available.
 
+Android 14 (API 34) ROM builds exclude Vector. Reprocessing an extracted API-34
+tree also removes the integration previously added by this installer. Other
+Android versions keep the existing Vector integration.
+
 ## Build and corresponding source
 
 Clone with `git clone --recurse-submodules`, or run

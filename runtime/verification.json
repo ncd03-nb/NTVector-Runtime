@@ -70,5 +70,15 @@
       "OPlus toolbuild",
       "OPlus PT toolbuild"
     ]
+  },
+  "android14_exclusion": {
+    "date": "2026-10-24",
+    "excluded_sdk": 34,
+    "other_sdks": "existing behavior preserved",
+    "fresh_tree": "skipped before payload verification",
+    "reused_tree": "Vector paths, marked CIL and metadata removed",
+    "runtime_installer_tests": 7,
+    "payload_integration_tests": 2,
+    "live_device": "ROM services disabled; no partition flashed"
   }
 }

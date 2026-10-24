@@ -12,6 +12,95 @@ HERE = Path(__file__).resolve().parent
 BEGIN = '; NTVector begin'
 END = '; NTVector end'
 
+CONTEXT_PATHS = (
+    '/system_ext/etc/ntvector(/.*)?', '/system_ext/etc/init/ntvector[.]rc',
+    '/system_ext/app/Vector(/.*)?', '/data/misc/ntlsposed(/.*)?',
+    '/data/adb/modules/zygisk_vector(/.*)?',
+)
+ROM_PATHS = ('system_ext/etc/ntvector', 'system_ext/etc/init/ntvector.rc',
+             'system_ext/app/Vector')
+
+
+def android_sdk(images):
+    # The running framework SDK, not the vendor policy version or launch API.
+    for rel in ('system/system/build.prop', 'system/build.prop', 'my_manifest/build.prop'):
+        path = images / rel
+        if not path.is_file():
+            continue
+        values = {}
+        for line in path.read_text(encoding='utf-8').splitlines():
+            if '=' in line and not line.lstrip().startswith('#'):
+                key, value = line.split('=', 1)
+                values[key.strip()] = value.strip()
+        for key in ('ro.build.version.sdk', 'ro.system.build.version.sdk'):
+            if key in values:
+                return int(values[key])
+    return None
+
+
+def metadata_directories(images):
+    result = [images.parent / 'config']
+    if images.parent.parent.name == 'build':
+        result.append(images.parent.parent.parent / 'config')
+    return result
+
+
+def remove_android14(images, vendor_policy_version=None):
+    """Remove only the ROM integration from an extracted API-34 tree."""
+    # Validate every deletion target before changing the extracted tree.
+    for rel in ROM_PATHS:
+        path = images / rel
+        if not path.resolve().is_relative_to(images):
+            raise ValueError('Vector removal path escapes image tree: ' + rel)
+        if path.is_symlink() or any(p.is_symlink() for p in path.parents if p != images and p.is_relative_to(images)):
+            raise ValueError('Vector removal refuses symlink path: ' + rel)
+    selinux = images / 'system_ext/etc/selinux'
+    vf = images / 'vendor/etc/selinux/plat_sepolicy_vers.txt'
+    version = vendor_policy_version or (vf.read_text().strip() if vf.exists() else '')
+    if version and not re.fullmatch(r'[0-9]{2,8}(?:[.][0-9]+)?', version):
+        raise ValueError('Invalid vendor mapping version')
+    mapping = selinux / 'mapping' / (version + '.cil')
+    mapping_bytes = mapping.read_bytes() if mapping.is_file() else b''
+    for rel in ROM_PATHS:
+        path = images / rel
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.is_file():
+            path.unlink()
+    for suffix in ('', '_debug'):
+        path = selinux / ('system_ext_sepolicy' + suffix + '.cil')
+        if not path.is_file():
+            continue
+        old = path.read_text()
+        new = re.sub(re.escape(BEGIN) + r'.*?' + re.escape(END) + r'\n?', '', old, flags=re.S)
+        if new != old:
+            path.write_text(new, encoding='utf-8', newline='\n')
+            digest = hashlib.sha256(path.read_bytes() + mapping_bytes).hexdigest() + '\n'
+            (selinux / ('system_ext_sepolicy_and_mapping' + suffix + '.sha256')).write_text(digest, newline='\n')
+    directories = metadata_directories(images) + [images / 'config']
+    contexts = {selinux / 'system_ext_file_contexts'}
+    contexts.update(d / 'system_ext_file_contexts' for d in directories)
+    for path in contexts:
+        if not path.is_file():
+            continue
+        old = path.read_text()
+        lines = [line for line in old.splitlines()
+                 if not line.split() or line.split()[0] not in CONTEXT_PATHS]
+        new = '\n'.join(lines) + ('\n' if lines else '')
+        if new != old:
+            path.write_text(new, encoding='utf-8', newline='\n')
+    for directory in directories:
+        path = directory / 'system_ext_fs_config'
+        if not path.is_file():
+            continue
+        old = path.read_text()
+        lines = [line for line in old.splitlines() if not line.split() or not any(
+            line.split()[0] == rel or line.split()[0].startswith(rel + '/') for rel in ROM_PATHS)]
+        new = '\n'.join(lines) + ('\n' if lines else '')
+        if new != old:
+            path.write_text(new, encoding='utf-8', newline='\n')
+    print('[Vector] Excluded on Android 14 / API 34; ROM loader and manager removed')
+
 def verify(payload=HERE):
     manifest = json.loads((payload / 'manifest.json').read_text())
     for rel, expected in manifest['sha256'].items():
@@ -22,6 +111,9 @@ def verify(payload=HERE):
 
 def install(images, payload=HERE, vendor_policy_version=None):
     images = Path(images).resolve()
+    if android_sdk(images) == 34:
+        remove_android14(images, vendor_policy_version)
+        return
     ext = images / 'system_ext'
     if not ext.is_dir(): raise ValueError('system_ext is required for Vector')
     verify(payload)
@@ -56,8 +148,7 @@ def install(images, payload=HERE, vendor_policy_version=None):
         digest = hashlib.sha256(path.read_bytes() + mapping_bytes).hexdigest() + '\n'
         (selinux / ('system_ext_sepolicy_and_mapping' + suffix + '.sha256')).write_text(digest, newline='\n')
     contexts = {selinux / 'system_ext_file_contexts', images / 'config/system_ext_file_contexts'}
-    metadata_dirs = [images.parent / 'config']
-    if images.parent.parent.name == 'build': metadata_dirs.append(images.parent.parent.parent / 'config')
+    metadata_dirs = metadata_directories(images)
     contexts.update(p / 'system_ext_file_contexts' for p in metadata_dirs if p.is_dir())
     rules = {
         '/system_ext/etc/ntvector(/.*)?': 'u:object_r:system_file:s0',
